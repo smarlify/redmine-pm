@@ -1,11 +1,15 @@
+# IDE and Editor files
 /.project
 /.idea
 /.vscode
 /.loadpath
-/.powrc
-/.rvmrc
-/.ruby-version
-/.byebug_history
+
+# Environment variables
+/.env*
+/.env.local
+/.env.*.local
+
+# Redmine configuration files
 /config/additional_environment.rb
 /config/configuration.yml
 /config/database.yml
@@ -13,24 +17,34 @@
 /config/secrets.yml
 /config/initializers/session_store.rb
 /config/initializers/secret_token.rb
-/coverage
+
+# Database files
 /db/*.db
 /db/*.sqlite3
 /db/*.sqlite3-*
 /db/schema.rb
-/.env*
+
+# Files directory
 /files/*
+
+# Python cache files
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyc
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyo
+
+# Log files
 /log/*.log*
 /log/mongrel_debug
-/plugins/*
-!/plugins/README
+
+# Plugins and themes - exclude zip files but allow directories
+/plugins/*.zip
+/themes/*.zip
+
+# Public assets
 /public/assets/*
 /public/dispatch.*
 /public/plugin_assets/*
-/themes/*
-!/themes/README
+
+# Temporary files
 /tmp/*
 /tmp/cache/*
 /tmp/pdf/*
@@ -38,13 +52,35 @@
 /tmp/sockets/*
 /tmp/test/*
 /tmp/thumbnails/*
-/vendor/cache
-*.rbc
 
+# Vendor cache
+/vendor/cache
+
+# Bundler
 /.bundle
 # Gemfile.lock is required for Heroku deployments
 # /Gemfile.lock
 /Gemfile.local
 
+# Node modules
 /node_modules
 yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build artifacts
+/dist
+/build
+*.log
+
+# OS files
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
