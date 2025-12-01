@@ -3,19 +3,6 @@
 /.idea
 /.vscode
 /.loadpath
-/.powrc
-/.rvmrc
-/.byebug_history
-*.swp
-*.swo
-*~
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Environment variables
 /.env*
@@ -30,10 +17,6 @@ Thumbs.db
 /config/secrets.yml
 /config/initializers/session_store.rb
 /config/initializers/secret_token.rb
-
-# Coverage and test files
-/coverage
-*.rbc
 
 # Database files
 /db/*.db
@@ -54,9 +37,7 @@ Thumbs.db
 
 # Plugins and themes - exclude zip files but allow directories
 /plugins/*.zip
-!/plugins/README
 /themes/*.zip
-!/themes/README
 
 # Public assets
 /public/assets/*
@@ -93,5 +74,13 @@ yarn.lock
 *.log
 
 # OS files
-*.orig
-*.rej
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
