@@ -26,6 +26,7 @@ gem "requestjs-rails", "~> 0.0.13"
 
 # Web server for production (Heroku)
 gem 'puma', '~> 6.4'
+gem 'pg', '~> 1.6.2'
 
 #  Ruby Standard Gems
 gem 'csv', '~> 3.3.2'
@@ -52,62 +53,9 @@ group :ldap do
 end
 
 # Optional gem for exporting the gantt to a PNG file
-group :minimagick do
-  gem 'mini_magick', '~> 5.2.0'
-end
-
-# Include database gems for the adapters found in the database
-# configuration file
-database_file = File.join(File.dirname(__FILE__), "config/database.yml")
-if File.exist?(database_file)
-  database_config = File.read(database_file)
-
-  # Requiring libraries in a Gemfile may cause Bundler warnings or
-  # unexpected behavior, especially if multiple gem versions are available.
-  # So, process database.yml through ERB only if it contains ERB syntax
-  # in the adapter setting. See https://www.redmine.org/issues/41749.
-  if database_config.match?(/^ *adapter: *<%=/)
-    require 'erb'
-    database_config = ERB.new(database_config).result
-  end
-
-  adapters = database_config.scan(/^ *adapter: *(.*)/).flatten.uniq
-  if adapters.any?
-    adapters.each do |adapter|
-      case adapter.strip
-      when /mysql2/
-        gem 'mysql2', '~> 0.5.0'
-        gem "with_advisory_lock"
-      when /trilogy/
-        gem 'trilogy', '~> 2.9.0'
-        gem "with_advisory_lock"
-      when /postgresql/, /postgres/
-        gem 'pg', '~> 1.6.2'
-      when /sqlite3/
-        gem 'sqlite3', '~> 2.7.4'
-      when /sqlserver/
-        gem 'tiny_tds', '~> 2.1.2'
-        gem 'activerecord-sqlserver-adapter', '~> 8.0.8'
-      else
-        warn("Unknown database adapter `#{adapter}` found in config/database.yml, use Gemfile.local to load your own database gems")
-      end
-    end
-  else
-    # Default to PostgreSQL for production (Heroku)
-    if ENV['RAILS_ENV'] == 'production' || ENV['HEROKU_APP_NAME']
-      gem 'pg', '~> 1.6.2'
-    else
-      warn("No adapter found in config/database.yml, please configure it first")
-    end
-  end
-else
-  # Default to PostgreSQL for production (Heroku)
-  if ENV['RAILS_ENV'] == 'production' || ENV['HEROKU_APP_NAME']
-    gem 'pg', '~> 1.6.2'
-  else
-    warn("Please configure your config/database.yml first")
-  end
-end
+# group :minimagick do
+#   gem 'mini_magick', '~> 5.2.0'
+# end
 
 group :development, :test do
   gem 'debug'
@@ -121,6 +69,7 @@ group :development do
 end
 
 group :test do
+  gem 'sqlite3'
   gem "rails-dom-testing", '>= 2.3.0'
   gem 'mocha', '>= 2.0.1'
   gem 'simplecov', '~> 0.22.0', :require => false
