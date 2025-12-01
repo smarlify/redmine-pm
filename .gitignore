@@ -18,6 +18,7 @@
 /db/*.sqlite3
 /db/*.sqlite3-*
 /db/schema.rb
+/.env*
 /files/*
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyc
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyo
@@ -41,7 +42,8 @@
 *.rbc
 
 /.bundle
-/Gemfile.lock
+# Gemfile.lock is required for Heroku deployments
+# /Gemfile.lock
 /Gemfile.local
 
 /node_modules

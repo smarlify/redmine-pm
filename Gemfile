@@ -1,8 +1,12 @@
 source 'https://rubygems.org'
 
+# Ruby Version
 ruby '>= 3.2.0', '< 3.5.0'
 
+#  Rails Version
 gem 'rails', '8.0.4'
+
+# Ruby Standard Gems
 gem 'rouge', '~> 4.5'
 gem 'mini_mime', '~> 1.1.0'
 gem "actionpack-xml_parser"
@@ -23,11 +27,16 @@ gem "doorkeeper", "~> 5.8.2"
 gem "bcrypt", require: false
 gem "doorkeeper-i18n", "~> 5.2"
 gem "requestjs-rails", "~> 0.0.13"
-
-#  Ruby Standard Gems
 gem 'csv', '~> 3.3.2'
-gem 'net-imap', '~> 0.5.7'
+
+# Web server for production (Heroku)
+gem 'puma', '~> 6.4'
+gem 'pg', '~> 1.6.2'
+
+# Explicitly require net-protocol before net-pop to fix Heroku build issue
+gem 'net-protocol', '~> 0.2.2'
 gem 'net-pop', '~> 0.1.2'
+gem 'net-imap', '~> 0.5.7'
 gem 'net-smtp', '~> 0.5.0'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
@@ -53,51 +62,8 @@ group :minimagick do
   gem 'mini_magick', '~> 5.2.0'
 end
 
-# Include database gems for the adapters found in the database
-# configuration file
-database_file = File.join(File.dirname(__FILE__), "config/database.yml")
-if File.exist?(database_file)
-  database_config = File.read(database_file)
-
-  # Requiring libraries in a Gemfile may cause Bundler warnings or
-  # unexpected behavior, especially if multiple gem versions are available.
-  # So, process database.yml through ERB only if it contains ERB syntax
-  # in the adapter setting. See https://www.redmine.org/issues/41749.
-  if database_config.match?(/^ *adapter: *<%=/)
-    require 'erb'
-    database_config = ERB.new(database_config).result
-  end
-
-  adapters = database_config.scan(/^ *adapter: *(.*)/).flatten.uniq
-  if adapters.any?
-    adapters.each do |adapter|
-      case adapter.strip
-      when /mysql2/
-        gem 'mysql2', '~> 0.5.0'
-        gem "with_advisory_lock"
-      when /trilogy/
-        gem 'trilogy', '~> 2.9.0'
-        gem "with_advisory_lock"
-      when /postgresql/
-        gem 'pg', '~> 1.6.2'
-      when /sqlite3/
-        gem 'sqlite3', '~> 2.7.4'
-      when /sqlserver/
-        gem 'tiny_tds', '~> 2.1.2'
-        gem 'activerecord-sqlserver-adapter', '~> 8.0.8'
-      else
-        warn("Unknown database adapter `#{adapter}` found in config/database.yml, use Gemfile.local to load your own database gems")
-      end
-    end
-  else
-    warn("No adapter found in config/database.yml, please configure it first")
-  end
-else
-  warn("Please configure your config/database.yml first")
-end
-
 group :development, :test do
-  gem 'debug'
+  gem 'pry'
 end
 
 group :development do
@@ -108,12 +74,12 @@ group :development do
 end
 
 group :test do
+  gem 'sqlite3'
   gem "rails-dom-testing", '>= 2.3.0'
   gem 'mocha', '>= 2.0.1'
   gem 'simplecov', '~> 0.22.0', :require => false
   gem "ffi", platforms: [:mingw, :x64_mingw, :mswin]
   # For running system tests
-  gem 'puma'
   gem "capybara", ">= 3.39"
   gem 'selenium-webdriver', '>= 4.11.0'
   # RuboCop
