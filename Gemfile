@@ -1,8 +1,12 @@
 source 'https://rubygems.org'
 
+# Ruby Version
 ruby '>= 3.2.0', '< 3.5.0'
 
+#  Rails Version
 gem 'rails', '8.0.4'
+
+# Ruby Standard Gems
 gem 'rouge', '~> 4.5'
 gem 'mini_mime', '~> 1.1.0'
 gem "actionpack-xml_parser"
@@ -23,17 +27,16 @@ gem "doorkeeper", "~> 5.8.2"
 gem "bcrypt", require: false
 gem "doorkeeper-i18n", "~> 5.2"
 gem "requestjs-rails", "~> 0.0.13"
+gem 'csv', '~> 3.3.2'
 
 # Web server for production (Heroku)
 gem 'puma', '~> 6.4'
 gem 'pg', '~> 1.6.2'
 
-#  Ruby Standard Gems
-gem 'csv', '~> 3.3.2'
-gem 'net-imap', '~> 0.5.7'
 # Explicitly require net-protocol before net-pop to fix Heroku build issue
 gem 'net-protocol', '~> 0.2.2'
 gem 'net-pop', '~> 0.1.2'
+gem 'net-imap', '~> 0.5.7'
 gem 'net-smtp', '~> 0.5.0'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
@@ -55,12 +58,12 @@ group :ldap do
 end
 
 # Optional gem for exporting the gantt to a PNG file
-# group :minimagick do
-#   gem 'mini_magick', '~> 5.2.0'
-# end
+group :minimagick do
+  gem 'mini_magick', '~> 5.2.0'
+end
 
 group :development, :test do
-  gem 'debug'
+  gem 'pry'
 end
 
 group :development do

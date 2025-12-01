@@ -22,7 +22,7 @@ end
 plugin :tmp_restart
 
 # Logging
-if ENV["RAILS_LOG_TO_STDOUT"].present?
+if ENV["RAILS_LOG_TO_STDOUT"] && !ENV["RAILS_LOG_TO_STDOUT"].empty?
   stdout_redirect "/dev/stdout", "/dev/stderr", true
 end
 
