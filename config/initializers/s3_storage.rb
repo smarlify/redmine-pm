@@ -74,8 +74,9 @@ module S3AttachmentExtension
   end
 end
 
-# Extend Attachment model with S3 support
-Attachment.class_eval do
+# Extend Attachment model with S3 support (after app loads)
+Rails.application.config.to_prepare do
+  Attachment.class_eval do
   include S3AttachmentExtension
 
   # Override diskfile method to download from S3 if needed
@@ -95,6 +96,7 @@ Attachment.class_eval do
     end
     
     local_path
+  end
   end
 end
 
