@@ -75,6 +75,30 @@ default:
   # attachments_storage_path: D:/redmine/files
   attachments_storage_path:
 
+  # AWS S3 Configuration for file storage (required for Heroku)
+  # When configured, files will be stored in S3 instead of local filesystem
+  # This is recommended for Heroku deployments where filesystem is ephemeral
+  #
+  # s3_access_key_id: your_aws_access_key_id
+  # s3_secret_access_key: your_aws_secret_access_key
+  # s3_bucket: your-bucket-name
+  # s3_region: us-east-1
+  # s3_endpoint: (optional, for S3-compatible services like DigitalOcean Spaces)
+  # s3_delete_local_after_upload: true (optional, delete local files after S3 upload)
+  s3_access_key_id:
+  s3_secret_access_key:
+  s3_bucket:
+  s3_region:
+  s3_endpoint:
+  s3_delete_local_after_upload:
+
+  # Slack Webhook Configuration for notifications
+  # When configured, Redmine will send notifications to Slack instead of (or in addition to) email
+  # To get a webhook URL, go to: https://api.slack.com/apps -> Your App -> Incoming Webhooks
+  #
+  # slack_webhook_url: YOUR_WEBHOOK_URL_HERE
+  slack_webhook_url:
+
   # Configuration of the autologin cookie.
   # autologin_cookie_name: the name of the cookie (default: autologin)
   # autologin_cookie_path: the cookie path (default: /)
