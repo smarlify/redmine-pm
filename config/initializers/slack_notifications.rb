@@ -3,8 +3,9 @@
 # Load Slack notifier
 require Rails.root.join('lib', 'redmine', 'slack_notifier')
 
-# Hook into Mailer class methods to send Slack notifications
-Mailer.class_eval do
+# Hook into Mailer class methods to send Slack notifications (after app loads)
+Rails.application.config.to_prepare do
+  Mailer.class_eval do
   # Override deliver_issue_add to also send Slack notification
   class << self
     alias_method :original_deliver_issue_add, :deliver_issue_add
