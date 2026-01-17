@@ -76,8 +76,10 @@ default:
   attachments_storage_path:
 
   # AWS S3 Configuration for file storage (required for Heroku)
+  # Provided by the "Redmine by Smarlify" plugin
   # When configured, files will be stored in S3 instead of local filesystem
   # This is recommended for Heroku deployments where filesystem is ephemeral
+  # See plugins/redmine_by_smarlify/README.md for more details
   #
   # s3_access_key_id: your_aws_access_key_id
   # s3_secret_access_key: your_aws_secret_access_key
@@ -93,8 +95,10 @@ default:
   s3_delete_local_after_upload:
 
   # Slack Webhook Configuration for notifications
+  # Provided by the "Redmine by Smarlify" plugin
   # When configured, Redmine will send notifications to Slack instead of (or in addition to) email
   # To get a webhook URL, go to: https://api.slack.com/apps -> Your App -> Incoming Webhooks
+  # See plugins/redmine_by_smarlify/README.md for more details
   #
   # slack_webhook_url: YOUR_WEBHOOK_URL_HERE
   slack_webhook_url:

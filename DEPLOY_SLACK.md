@@ -1,5 +1,8 @@
 # Deploy Slack Notifications to Heroku
 
+> **Note:** Slack notifications are now provided by the "Redmine by Smarlify" plugin.
+> See `plugins/redmine_by_smarlify/README.md` for detailed documentation.
+
 ## Quick Deployment Steps
 
 ### 1. Get Slack Webhook URL
@@ -52,7 +55,7 @@ heroku restart -a redmine-pm
 heroku run rails console -a redmine-pm
 
 # In the console:
-Redmine::SlackNotifier.send_test_notification
+RedmineBySmarlify::Services::SlackNotifier.send_test_notification
 ```
 
 You should see a test message in your `#redminebot` channel.

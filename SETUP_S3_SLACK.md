@@ -1,5 +1,8 @@
 # S3 File Storage & Slack Notifications Setup
 
+> **Note:** S3 file storage and Slack notifications are now provided by the "Redmine by Smarlify" plugin.
+> See `plugins/redmine_by_smarlify/README.md` for detailed documentation.
+
 This document explains how to configure S3 file storage and Slack notifications for Redmine on Heroku.
 
 ## Quick Start
@@ -60,7 +63,7 @@ heroku restart -a redmine-pm
 ```bash
 # Test Slack
 heroku run rails console -a redmine-pm
-Redmine::SlackNotifier.send_test_notification
+RedmineBySmarlify::Services::SlackNotifier.send_test_notification
 
 # Test S3 (upload a file in Redmine UI and check S3 bucket)
 ```
@@ -156,8 +159,8 @@ If you have existing files in the local filesystem:
 ```bash
 heroku run rails console -a redmine-pm
 Attachment.find_each do |att|
-  if File.exist?(att.diskfile) && !Redmine::S3Storage.file_exists?(att.s3_key)
-    Redmine::S3Storage.upload_file(att.diskfile, att.s3_key, att.content_type)
+  if File.exist?(att.diskfile) && !RedmineBySmarlify::Services::S3Storage.file_exists?(att.s3_key)
+    RedmineBySmarlify::Services::S3Storage.upload_file(att.diskfile, att.s3_key, att.content_type)
   end
 end
 ```
