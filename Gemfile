@@ -52,6 +52,12 @@ gem "sanitize", "~> 7.0"
 # Triggering of Webhooks
 gem "rest-client", "~> 2.1"
 
+# AWS S3 support for file storage on Heroku
+gem "fog-aws", "~> 3.23"
+
+# HTTP client for Slack notifications
+gem "httparty", "~> 0.21"
+
 # Optional gem for LDAP authentication
 group :ldap do
   gem 'net-ldap', '~> 0.17.0'

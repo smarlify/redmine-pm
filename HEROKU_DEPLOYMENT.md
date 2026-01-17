@@ -129,13 +129,78 @@ Heroku sets `DATABASE_URL` automatically when you add the PostgreSQL addon.
 
 Static file serving is enabled in production for Heroku via `RAILS_SERVE_STATIC_FILES=true`. If you want to use a CDN or asset host, you can configure it in `config/environments/production.rb`.
 
-### File Storage
+### File Storage (S3 Configuration)
 
-Redmine stores uploaded files in the `files/` directory by default. On Heroku, the filesystem is ephemeral, meaning files will be lost on each deploy. For production use, consider:
+Redmine stores uploaded files in the `files/` directory by default. On Heroku, the filesystem is ephemeral, meaning files will be lost on each deploy. **This project includes built-in S3 support** to solve this issue.
 
-1. **Using a cloud storage service** (S3, Google Cloud Storage, etc.)
-2. **Using Heroku addons** like Bucketeer or similar
-3. **Configuring Redmine** to use external storage
+#### Option 1: AWS S3 (Recommended)
+
+1. **Create an S3 bucket** in AWS:
+   - Go to AWS S3 Console
+   - Create a new bucket (e.g., `redmine-pm-files`)
+   - Note the region (e.g., `us-east-1`)
+
+2. **Create IAM user with S3 access**:
+   - Go to AWS IAM Console
+   - Create a new user with programmatic access
+   - Attach policy: `AmazonS3FullAccess` (or create custom policy for your bucket only)
+   - Save the Access Key ID and Secret Access Key
+
+3. **Configure S3 in Heroku**:
+```bash
+# Set S3 credentials
+heroku config:set AWS_ACCESS_KEY_ID=your_access_key_id -a redmine-pm
+heroku config:set AWS_SECRET_ACCESS_KEY=your_secret_access_key -a redmine-pm
+heroku config:set S3_BUCKET=redmine-pm-files -a redmine-pm
+heroku config:set AWS_REGION=us-east-1 -a redmine-pm
+```
+
+4. **Or configure via configuration.yml**:
+   - Create `config/configuration.yml` (copy from `configuration.yml.example`)
+   - Add S3 settings:
+```yaml
+production:
+  s3_access_key_id: your_access_key_id
+  s3_secret_access_key: your_secret_access_key
+  s3_bucket: redmine-pm-files
+  s3_region: us-east-1
+```
+
+#### Option 2: DigitalOcean Spaces (S3-Compatible)
+
+DigitalOcean Spaces is S3-compatible and often cheaper:
+
+```bash
+heroku config:set AWS_ACCESS_KEY_ID=your_spaces_key -a redmine-pm
+heroku config:set AWS_SECRET_ACCESS_KEY=your_spaces_secret -a redmine-pm
+heroku config:set S3_BUCKET=your-space-name -a redmine-pm
+heroku config:set AWS_REGION=nyc3 -a redmine-pm
+heroku config:set S3_ENDPOINT=https://nyc3.digitaloceanspaces.com -a redmine-pm
+```
+
+#### Option 3: Heroku Bucketeer Addon
+
+```bash
+# Add Bucketeer addon (provides S3-compatible storage)
+heroku addons:create bucketeer:hobbyist -a redmine-pm
+
+# Bucketeer automatically sets these env vars:
+# BUCKETEER_AWS_ACCESS_KEY_ID
+# BUCKETEER_AWS_SECRET_ACCESS_KEY
+# BUCKETEER_BUCKET_NAME
+# BUCKETEER_AWS_REGION
+
+# Map to our S3 config vars
+heroku config:set AWS_ACCESS_KEY_ID=$(heroku config:get BUCKETEER_AWS_ACCESS_KEY_ID -a redmine-pm) -a redmine-pm
+heroku config:set AWS_SECRET_ACCESS_KEY=$(heroku config:get BUCKETEER_AWS_SECRET_ACCESS_KEY -a redmine-pm) -a redmine-pm
+heroku config:set S3_BUCKET=$(heroku config:get BUCKETEER_BUCKET_NAME -a redmine-pm) -a redmine-pm
+heroku config:set AWS_REGION=$(heroku config:get BUCKETEER_AWS_REGION -a redmine-pm) -a redmine-pm
+```
+
+**Note**: After configuring S3, restart your app:
+```bash
+heroku restart -a redmine-pm
+```
 
 ### Email Configuration
 
@@ -153,6 +218,50 @@ heroku config:set SMTP_PASSWORD=your-password -a redmine-pm
 ```
 
 Then configure in Redmine admin panel: Administration → Settings → Email notifications
+
+### Slack Notifications (Alternative to Email)
+
+**This project includes built-in Slack notifications** that can replace or complement email notifications. This is often easier to set up than SMTP on Heroku.
+
+#### Setup Slack Webhook
+
+1. **Create a Slack App**:
+   - Go to https://api.slack.com/apps
+   - Click "Create New App" → "From scratch"
+   - Name it (e.g., "Redmine Notifications") and select your workspace
+
+2. **Enable Incoming Webhooks**:
+   - In your app settings, go to "Incoming Webhooks"
+   - Toggle "Activate Incoming Webhooks" to ON
+   - Click "Add New Webhook to Workspace"
+   - Select the channel where notifications should go (e.g., `#redmine-notifications`)
+   - Copy the Webhook URL
+
+3. **Configure in Heroku**:
+```bash
+heroku config:set SLACK_WEBHOOK_URL="YOUR_WEBHOOK_URL_HERE" -a redmine-pm
+```
+
+4. **Or configure via configuration.yml**:
+```yaml
+production:
+  slack_webhook_url: YOUR_WEBHOOK_URL_HERE
+```
+
+5. **Test the integration**:
+```bash
+heroku run rails console -a redmine-pm
+# Then in console:
+Redmine::SlackNotifier.send_test_notification
+```
+
+**Note**: When Slack webhook is configured, Redmine will send notifications to Slack for:
+- New issues
+- Issue updates and comments
+- New documents
+- Wiki page changes
+
+You can use Slack notifications **instead of** email (if SMTP is not configured) or **in addition to** email (if both are configured).
 
 ### Scaling
 
