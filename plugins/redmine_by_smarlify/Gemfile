@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+# AWS S3 support for file storage
+gem "fog-aws", "~> 3.23"
+
+# HTTP client for Slack notifications
+gem "httparty", "~> 0.21"
