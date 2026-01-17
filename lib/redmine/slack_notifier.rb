@@ -189,8 +189,8 @@ module Redmine
     def self.build_issue_updated_message(issue, journal, author, notified_users = [])
       changes = journal.details.map do |detail|
         property = detail.prop_key.humanize
-        old_value = detail.old_value.presence || 'N/A'
-        new_value = detail.value.presence || 'N/A'
+        old_value = format_detail_value(detail, detail.old_value)
+        new_value = format_detail_value(detail, detail.value)
         "*#{property}*: #{old_value} → #{new_value}"
       end.join("\n")
 
@@ -439,16 +439,65 @@ module Redmine
       }
     end
 
+    # Get the base URL for Redmine
+    # In production (Heroku), use pm.smarlify.co, otherwise use Setting.host_name
+    def self.base_url
+      if ENV['DYNO'].present? || Rails.env.production?
+        "https://pm.smarlify.co"
+      else
+        "#{Setting.protocol}://#{Setting.host_name}"
+      end
+    end
+
     def self.issue_url(issue)
-      "#{Setting.protocol}://#{Setting.host_name}/issues/#{issue.id}"
+      "#{base_url}/issues/#{issue.id}"
     end
 
     def self.document_url(document)
-      "#{Setting.protocol}://#{Setting.host_name}/documents/#{document.id}"
+      "#{base_url}/documents/#{document.id}"
     end
 
     def self.wiki_url(page)
-      "#{Setting.protocol}://#{Setting.host_name}/projects/#{page.project.identifier}/wiki/#{page.title}"
+      "#{base_url}/projects/#{page.project.identifier}/wiki/#{page.title}"
+    end
+
+    # Format detail values to show human-readable names instead of IDs
+    def self.format_detail_value(detail, value)
+      return 'N/A' if value.blank?
+
+      case detail.property
+      when 'attr'
+        case detail.prop_key
+        when 'status_id'
+          IssueStatus.find_by(id: value)&.name || value
+        when 'priority_id'
+          IssuePriority.find_by(id: value)&.name || value
+        when 'tracker_id'
+          Tracker.find_by(id: value)&.name || value
+        when 'assigned_to_id'
+          User.find_by(id: value)&.name || value
+        when 'category_id'
+          IssueCategory.find_by(id: value)&.name || value
+        when 'fixed_version_id'
+          Version.find_by(id: value)&.name || value
+        when 'project_id'
+          Project.find_by(id: value)&.name || value
+        else
+          value
+        end
+      when 'cf' # Custom fields
+        custom_field = CustomField.find_by(id: detail.prop_key)
+        if custom_field&.field_format == 'list'
+          custom_field.possible_values.find { |v| v == value } || value
+        else
+          value
+        end
+      else
+        value
+      end
+    rescue => e
+      Rails.logger.error "Error formatting detail value: #{e.message}"
+      value
     end
 
     def self.send_message(message)
