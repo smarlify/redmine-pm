@@ -101,11 +101,16 @@ module RedmineApp
     # can change it (environments/ENV.rb would take precedence over it)
     config.log_level = Rails.env.production? ? :info : :debug
 
+    # Configure session store to allow cookies in cross-origin iframes
+    # SameSite=None is required for CSRF tokens to work in iframes
+    # Secure flag is required when SameSite=None (enforced by browsers)
+    # Note: In production (Heroku), HTTPS is enforced, so secure cookies work
     config.session_store(
       :cookie_store,
       :key => '_redmine_session',
       :path => config.relative_url_root || '/',
-      :same_site => :lax
+      :same_site => :none,
+      :secure => Rails.env.production?
     )
 
     if File.exist?(File.join(File.dirname(__FILE__), 'additional_environment.rb'))
