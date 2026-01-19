@@ -20,16 +20,15 @@ Rails.application.config.content_security_policy do |policy|
   if Rails.env.development?
     trusted_domains << 'http://localhost:3000'
     trusted_domains << 'http://127.0.0.1:3000'
+    trusted_domains << 'http://localhost:*'
+    trusted_domains << 'http://127.0.0.1:*'
   end
   
   # Allow iframe embedding from trusted domains and self
   # :self allows embedding from the same origin (pm.smarlify.co)
-  if trusted_domains.any?
-    policy.frame_ancestors :self, *trusted_domains
-  else
-    # If no trusted domains configured, only allow self
-    policy.frame_ancestors :self
-  end
+  # Note: Rails requires explicit string values, not symbols for URLs
+  frame_ancestors_list = [:self] + trusted_domains.map { |d| d.to_s }
+  policy.frame_ancestors(*frame_ancestors_list)
 end
 
 # Report CSP violations (optional, for debugging)
