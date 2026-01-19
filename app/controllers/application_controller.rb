@@ -41,13 +41,20 @@ class ApplicationController < ActionController::Base
   layout 'base'
 
   def verify_authenticity_token
-    unless api_request?
+    unless api_request? || trusted_iframe_login_request?
       super
     end
   end
 
   def handle_unverified_request
     unless api_request?
+      # For trusted iframe login requests, allow without CSRF token
+      # since login already requires username/password authentication
+      if trusted_iframe_login_request?
+        logger.info("Allowing login request from trusted iframe origin: #{request.referer}") if logger
+        return
+      end
+      
       begin
         super
       rescue ActionController::InvalidAuthenticityToken => e
@@ -788,5 +795,59 @@ class ApplicationController < ActionController::Base
     # This helps when the page is embedded in an iframe from a parent app with service workers
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # Ensure CSP frame-ancestors is set (handled by content_security_policy initializer)
+  end
+
+  # Check if the request is a login POST from a trusted iframe origin
+  def trusted_iframe_login_request?
+    return false unless request.post?
+    return false unless controller_name == 'account' && action_name == 'login'
+    return false unless request.referer.present?
+    
+    begin
+      referer_uri = URI.parse(request.referer)
+      referer_origin = "#{referer_uri.scheme}://#{referer_uri.host}"
+      referer_origin_with_port = "#{referer_uri.scheme}://#{referer_uri.host}:#{referer_uri.port}" if referer_uri.port && referer_uri.port != (referer_uri.scheme == 'https' ? 443 : 80)
+      
+      trusted_domains = trusted_iframe_domains
+      
+      # Check if referer matches any trusted domain
+      trusted_domains.any? do |domain|
+        domain_uri = URI.parse(domain)
+        domain_origin = "#{domain_uri.scheme}://#{domain_uri.host}"
+        
+        # Exact match
+        referer_origin == domain_origin ||
+        # Match with port if specified
+        (referer_origin_with_port && referer_origin_with_port == "#{domain_uri.scheme}://#{domain_uri.host}:#{domain_uri.port}") ||
+        # Wildcard match for localhost in development
+        (domain.include?('*') && referer_origin.start_with?(domain_origin.gsub('*', '')))
+      end
+    rescue URI::InvalidURIError, ArgumentError
+      false
+    end
+  end
+
+  # Get list of trusted iframe domains (same logic as CSP initializer)
+  def trusted_iframe_domains
+    trusted_domains = []
+    
+    # Default trusted domains
+    trusted_domains << 'https://easy-redmine-app-01fc62f8c1f4.herokuapp.com'
+    trusted_domains << 'https://app.easysoftware.com'
+    
+    # Add domains from environment variable if set (comma-separated)
+    if ENV['REDMINE_TRUSTED_IFRAME_DOMAINS'].present?
+      trusted_domains.concat(ENV['REDMINE_TRUSTED_IFRAME_DOMAINS'].split(',').map(&:strip))
+    end
+    
+    # In development, allow localhost
+    if Rails.env.development?
+      trusted_domains << 'http://localhost:3000'
+      trusted_domains << 'http://127.0.0.1:3000'
+      trusted_domains << 'http://localhost:*'
+      trusted_domains << 'http://127.0.0.1:*'
+    end
+    
+    trusted_domains
   end
 end
