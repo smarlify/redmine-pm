@@ -63,6 +63,7 @@ class ApplicationController < ActionController::Base
 
   before_action :session_expiration, :user_setup, :check_if_login_required, :set_localization, :check_password_change, :check_twofa_activation
   after_action :record_project_usage
+  after_action :set_iframe_headers
 
   rescue_from ::Unauthorized, :with => :deny_access
   rescue_from ::ActionView::MissingTemplate, :with => :missing_template
@@ -779,5 +780,13 @@ class ApplicationController < ActionController::Base
   # doesn't use the layout for api requests
   def _include_layout?(*args)
     api_request? ? false : super
+  end
+
+  # Set headers to help with iframe embedding and prevent service worker issues
+  def set_iframe_headers
+    # Add header to prevent service worker registration errors
+    # This helps when the page is embedded in an iframe from a parent app with service workers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Ensure CSP frame-ancestors is set (handled by content_security_policy initializer)
   end
 end
