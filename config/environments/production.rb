@@ -97,4 +97,9 @@ Rails.application.configure do
 
   # Automatically execute asset precompilation on startup in case of changes have been detected in assets
   config.assets.redmine_detect_update = true
+
+  # Remove X-Frame-Options header to allow iframe embedding
+  # Content-Security-Policy (configured in initializers/content_security_policy.rb) 
+  # will handle iframe restrictions more securely
+  config.action_dispatch.default_headers.delete('X-Frame-Options')
 end
