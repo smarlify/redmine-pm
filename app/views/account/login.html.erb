@@ -5,14 +5,13 @@
   <%= back_url_hidden_field_tag %>
   
   <label for="username"><%=l(:field_login)%></label>
-  <%# Disable autofocus when in iframe to avoid browser blocking - JavaScript will handle this as fallback %>
-  <%= text_field_tag 'username', params[:username], :tabindex => '1', :autocomplete => 'username', :autofocus => params[:username].blank?, :data => {:iframe_autofocus => 'false'} %>
+  <%= text_field_tag 'username', params[:username], :tabindex => '1', :autocomplete => 'username', :autofocus => params[:username].blank? %>
   
   <label for="password">
     <%=l(:field_password)%>
     <%= link_to l(:label_password_lost), lost_password_path, :class => "lost_password" if Setting.lost_password? %>
   </label>
-  <%= password_field_tag 'password', nil, :tabindex => '2', :autocomplete => 'current-password', :autofocus => params[:username].present?, :data => {:iframe_autofocus => 'false'} %>
+  <%= password_field_tag 'password', nil, :tabindex => '2', :autocomplete => 'current-password', :autofocus => params[:username].present? %>
   
   <% if Setting.autologin? %>
     <label for="autologin"><%= check_box_tag 'autologin', 1, false, :tabindex => 4 %> <%= l(:label_stay_logged_in) %></label>

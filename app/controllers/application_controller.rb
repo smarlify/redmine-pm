@@ -41,20 +41,13 @@ class ApplicationController < ActionController::Base
   layout 'base'
 
   def verify_authenticity_token
-    unless api_request? || trusted_iframe_login_request?
+    unless api_request?
       super
     end
   end
 
   def handle_unverified_request
     unless api_request?
-      # For trusted iframe login requests, allow without CSRF token
-      # since login already requires username/password authentication
-      if trusted_iframe_login_request?
-        logger.info("Allowing login request from trusted iframe origin: #{request.referer}") if logger
-        return
-      end
-      
       begin
         super
       rescue ActionController::InvalidAuthenticityToken => e
@@ -70,7 +63,6 @@ class ApplicationController < ActionController::Base
 
   before_action :session_expiration, :user_setup, :check_if_login_required, :set_localization, :check_password_change, :check_twofa_activation
   after_action :record_project_usage
-  after_action :set_iframe_headers
 
   rescue_from ::Unauthorized, :with => :deny_access
   rescue_from ::ActionView::MissingTemplate, :with => :missing_template
@@ -787,102 +779,5 @@ class ApplicationController < ActionController::Base
   # doesn't use the layout for api requests
   def _include_layout?(*args)
     api_request? ? false : super
-  end
-
-  # Set headers to help with iframe embedding and prevent service worker issues
-  def set_iframe_headers
-    # Add header to prevent service worker registration errors
-    # This helps when the page is embedded in an iframe from a parent app with service workers
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    # Ensure CSP frame-ancestors is set (handled by content_security_policy initializer)
-  end
-
-  # Check if the request is a login POST from a trusted iframe origin
-  def trusted_iframe_login_request?
-    return false unless request.post?
-    return false unless controller_name == 'account' && action_name == 'login'
-    
-    # Check if this is a cross-site request (likely from iframe)
-    # Sec-Fetch-Site header indicates: same-origin, same-site, cross-site, or none
-    sec_fetch_site = request.headers['Sec-Fetch-Site']
-    is_cross_site = sec_fetch_site.present? && ['cross-site', 'same-site'].include?(sec_fetch_site.downcase)
-    
-    # Get origin from Referer or Origin header
-    origin_to_check = nil
-    
-    # Try Origin header first (more reliable for POST requests)
-    if request.headers['Origin'].present?
-      origin_to_check = request.headers['Origin']
-    # Fall back to Referer header
-    elsif request.referer.present?
-      begin
-        referer_uri = URI.parse(request.referer)
-        origin_to_check = "#{referer_uri.scheme}://#{referer_uri.host}"
-        origin_to_check += ":#{referer_uri.port}" if referer_uri.port && referer_uri.port != (referer_uri.scheme == 'https' ? 443 : 80)
-      rescue URI::InvalidURIError, ArgumentError
-        # If we can't parse referer, try to extract origin from the string
-        origin_to_check = request.referer.match(%r{^https?://[^/]+})&.to_s
-      end
-    end
-    
-    return false unless origin_to_check.present?
-    
-    trusted_domains = trusted_iframe_domains
-    
-    # Check if origin matches any trusted domain
-    is_trusted = trusted_domains.any? do |domain|
-      domain_uri = begin
-        URI.parse(domain)
-      rescue URI::InvalidURIError
-        nil
-      end
-      next false unless domain_uri
-      
-      domain_origin = "#{domain_uri.scheme}://#{domain_uri.host}"
-      domain_origin_with_port = domain_uri.port && domain_uri.port != (domain_uri.scheme == 'https' ? 443 : 80) ? 
-        "#{domain_uri.scheme}://#{domain_uri.host}:#{domain_uri.port}" : nil
-      
-      # Exact match
-      origin_to_check == domain_origin ||
-      origin_to_check == domain_origin_with_port ||
-      # Match with/without port
-      (origin_to_check.start_with?(domain_origin + ':') && domain_origin_with_port.nil?) ||
-      # Wildcard match for localhost
-      (domain.include?('*') && origin_to_check.start_with?(domain_origin.gsub('*', '')))
-    end
-    
-    # Log for debugging
-    if logger && (is_cross_site || is_trusted)
-      logger.info("Login request check - Origin: #{origin_to_check}, Sec-Fetch-Site: #{sec_fetch_site}, Trusted: #{is_trusted}, Cross-site: #{is_cross_site}")
-    end
-    
-    is_trusted
-  end
-
-  # Get list of trusted iframe domains (same logic as CSP initializer)
-  def trusted_iframe_domains
-    trusted_domains = []
-    
-    # Default trusted domains
-    trusted_domains << 'https://easy-redmine-app-01fc62f8c1f4.herokuapp.com'
-    trusted_domains << 'https://app.easysoftware.com'
-    
-    # Allow localhost for local development/testing (even in production)
-    # This is useful when testing EasyRedmineApp locally against production Redmine
-    trusted_domains << 'http://localhost:3000'
-    trusted_domains << 'http://127.0.0.1:3000'
-    
-    # Add domains from environment variable if set (comma-separated)
-    if ENV['REDMINE_TRUSTED_IFRAME_DOMAINS'].present?
-      trusted_domains.concat(ENV['REDMINE_TRUSTED_IFRAME_DOMAINS'].split(',').map(&:strip))
-    end
-    
-    # In development, also allow wildcard localhost
-    if Rails.env.development?
-      trusted_domains << 'http://localhost:*'
-      trusted_domains << 'http://127.0.0.1:*'
-    end
-    
-    trusted_domains
   end
 end

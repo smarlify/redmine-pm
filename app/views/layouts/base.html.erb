@@ -18,67 +18,6 @@
 <%= call_hook :view_layouts_base_html_head %>
 <!-- page specific tags -->
 <%= yield :header_tags -%>
-<%= javascript_tag do %>
-  // Fix for iframe embedding issues
-  (function() {
-    // Detect if we're in an iframe
-    var inIframe = window.self !== window.top;
-    
-    // Fix 1: Remove autofocus attributes when in iframe (browsers block autofocus in cross-origin iframes)
-    if (inIframe) {
-      // Remove autofocus immediately if DOM is already loaded
-      var autofocusElements = document.querySelectorAll('[autofocus]');
-      if (autofocusElements.length > 0) {
-        autofocusElements.forEach(function(el) {
-          el.removeAttribute('autofocus');
-        });
-      }
-      
-      // Also handle elements added after DOMContentLoaded
-      document.addEventListener('DOMContentLoaded', function() {
-        var autofocusElements = document.querySelectorAll('[autofocus]');
-        autofocusElements.forEach(function(el) {
-          el.removeAttribute('autofocus');
-        });
-      });
-    }
-    
-    // Fix 2: Handle service worker errors gracefully
-    // The workbox error is typically from the parent app trying to precache this URL
-    // Catch unhandled promise rejections from service workers
-    if (inIframe) {
-      window.addEventListener('unhandledrejection', function(event) {
-        var reason = event.reason;
-        var message = reason && (reason.message || reason.toString()) || '';
-        // Suppress workbox precache errors that occur in iframe context
-        if (message.indexOf('non-precached-url') !== -1 || 
-            message.indexOf('workbox') !== -1) {
-          event.preventDefault(); // Prevent the error from appearing in console
-        }
-      });
-      
-      // Also try to unregister any service workers for this origin if they exist
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          registrations.forEach(function(registration) {
-            // Check if this service worker is for the current origin
-            if (registration.scope === window.location.origin + '/') {
-              registration.unregister().catch(function(err) {
-                // Silently fail - this is just cleanup
-              });
-            }
-          });
-        }).catch(function(err) {
-          // Silently fail - service worker check failed
-        });
-      }
-    }
-    
-    // Fix 3: Ensure CSRF token is accessible in iframe context
-    // The CSRF token is in the meta tag, which works in iframes
-    // Rails handles CSRF tokens correctly for iframe contexts
-  })();
-<% end %>
 </head>
 <body class="<%= body_css_classes %>" data-text-formatting="<%= Setting.text_formatting %>">
 <%= call_hook :view_layouts_base_body_top %>
