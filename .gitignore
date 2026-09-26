@@ -84,3 +84,6 @@ yarn.lock
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Database dumps
+/db/backup/
